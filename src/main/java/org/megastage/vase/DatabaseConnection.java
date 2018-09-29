@@ -23,6 +23,10 @@ public abstract class DatabaseConnection implements AutoCloseable {
     public abstract <T extends DaoObject> boolean update(T item) throws SQLException;
     public abstract <T extends DaoObject> boolean delete(Class<T> clazz, Object key) throws SQLException;
 
+    public boolean delete(DaoObject dao) throws SQLException {
+        return delete(dao.getClass(), DaoObject.getKeyValue(dao));
+    }
+
     public <T extends DaoObject> T safeCreate(T dao) {
         try { return create(dao); }
         catch(SQLException e) {
@@ -61,11 +65,6 @@ public abstract class DatabaseConnection implements AutoCloseable {
             Log.error("DB", "safeDelete failed", e);
             throw new RuntimeException(e);
         }
-    }
-
-
-    public boolean delete(DaoObject dao) throws SQLException {
-        return delete(dao.getClass(), DaoObject.getKeyValue(dao));
     }
 
     public boolean safeDelete(DaoObject dao) {

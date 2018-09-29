@@ -153,7 +153,7 @@ public class DaoStatement extends NamedParameterStatement {
                     setObjectEx(f.getName(), f.get(src));
                 }
             } catch (IllegalAccessException e) {
-                e.printStackTrace();
+                Log.warn("DB", String.format("Illegal access: %s.%s", src.getClass().getName(), f.getName()));
             }
         }
     }
@@ -173,7 +173,7 @@ public class DaoStatement extends NamedParameterStatement {
                 }
 
             } catch (IllegalAccessException e) {
-                e.printStackTrace();
+                Log.warn("DB", String.format("Illegal access: %s.%s", dst.getClass().getName(), f.getName()));
             }
         }
 
