@@ -7,27 +7,24 @@ import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Properties;
 import java.util.stream.Collectors;
 
-public abstract class DatabaseConnection implements AutoCloseable {
-    static final String driver 	= "org.postgresql.Driver";
-    static final String url 	= "jdbc:postgresql://localhost/mfactory";
-    static final String user 	= "mfactory";
-    static final String pass 	= "";
+public abstract class Database implements AutoCloseable {
 
     public abstract Connection getConnection() throws SQLException;
     public abstract void close();
-    public abstract <T extends DaoObject> T create(T dao) throws SQLException;
-    public abstract <T extends DaoObject> T read(Class<T> clazz, Object key) throws SQLException;
-    public abstract <T extends DaoObject> List<T> readAll(Class<T> clazz) throws SQLException;
-    public abstract <T extends DaoObject> boolean update(T item) throws SQLException;
-    public abstract <T extends DaoObject> boolean delete(Class<T> clazz, Object key) throws SQLException;
+    public abstract <T> T create(T dao) throws SQLException;
+    public abstract <T> T read(Class<T> clazz, Object key) throws SQLException;
+    public abstract <T> List<T> readAll(Class<T> clazz) throws SQLException;
+    public abstract <T> boolean update(T item) throws SQLException;
+    public abstract <T> boolean delete(Class<T> clazz, Object key) throws SQLException;
 
     public boolean delete(DaoObject dao) throws SQLException {
         return delete(dao.getClass(), DaoObject.getKeyValue(dao));
     }
 
-    public <T extends DaoObject> T safeCreate(T dao) {
+    public <T> T safeCreate(T dao) {
         try { return create(dao); }
         catch(SQLException e) {
             Log.error("DB", "safeCreate failed", e);
@@ -35,7 +32,7 @@ public abstract class DatabaseConnection implements AutoCloseable {
         }
     }
 
-    public <T extends DaoObject> T safeRead(Class<T> clazz, Object key) {
+    public <T> T safeRead(Class<T> clazz, Object key) {
         try { return read(clazz, key); }
         catch(SQLException e) {
             Log.error("DB", "safeRead failed", e);
@@ -43,7 +40,7 @@ public abstract class DatabaseConnection implements AutoCloseable {
         }
     }
 
-    public <T extends DaoObject> List<T> safeReadAll(Class<T> clazz) {
+    public <T> List<T> safeReadAll(Class<T> clazz) {
         try { return readAll(clazz); }
         catch(SQLException e) {
             Log.error("DB", "safeReadAll failed", e);
@@ -51,7 +48,7 @@ public abstract class DatabaseConnection implements AutoCloseable {
         }
     }
 
-    public <T extends DaoObject> boolean safeUpdate(T item) {
+    public <T> boolean safeUpdate(T item) {
         try { return update(item); }
         catch(SQLException e) {
             Log.error("DB", "safeUpdate failed", e);
@@ -59,7 +56,7 @@ public abstract class DatabaseConnection implements AutoCloseable {
         }
     }
 
-    public <T extends DaoObject> boolean safeDelete(Class<T> clazz, Object key) {
+    public <T> boolean safeDelete(Class<T> clazz, Object key) {
         try { return delete(clazz, key); }
         catch(SQLException e) {
             Log.error("DB", "safeDelete failed", e);
@@ -75,7 +72,7 @@ public abstract class DatabaseConnection implements AutoCloseable {
         }
     }
 
-    public static <T extends DaoObject> String getTableName(Class<T> clazz) {
+    public static <T> String getTableName(Class<T> clazz) {
         String tableName = clazz.getSimpleName();
 
         SqlTableName anno = clazz.getAnnotation(SqlTableName.class);
@@ -86,7 +83,7 @@ public abstract class DatabaseConnection implements AutoCloseable {
         return tableName;
     }
 
-    <T extends DaoObject> DaoStatement create_READ(Connection conn, Class<T> clazz) throws SQLException {
+    <T> DaoStatement create_READ(Connection conn, Class<T> clazz) throws SQLException {
         Field keyField = DaoObject.getKeyField(clazz);
 
         String key = keyField.getName();
@@ -97,12 +94,12 @@ public abstract class DatabaseConnection implements AutoCloseable {
         return new DaoStatement(conn, sql);
     }
 
-    <T extends DaoObject> DaoStatement create_READ_ALL(Connection conn, Class<T> clazz) throws SQLException {
+    <T> DaoStatement create_READ_ALL(Connection conn, Class<T> clazz) throws SQLException {
         String sql = "SELECT * FROM " + getTableName(clazz);
         return new DaoStatement(conn, sql);
     }
 
-    <T extends DaoObject> DaoStatement create_CREATE(Connection conn, Class<T> clazz) throws SQLException {
+    <T> DaoStatement create_CREATE(Connection conn, Class<T> clazz) throws SQLException {
         List<String> cols = Arrays.stream(DaoObject.getFields(clazz))
                 .filter(field -> field.getAnnotation(SqlSerial.class) == null)
                 .map(Field::getName)
@@ -119,7 +116,7 @@ public abstract class DatabaseConnection implements AutoCloseable {
         return new DaoStatement(conn, sql);
     }
 
-    <T extends DaoObject> DaoStatement create_UPDATE(Connection conn, Class<T> clazz) throws SQLException {
+    <T> DaoStatement create_UPDATE(Connection conn, Class<T> clazz) throws SQLException {
         Field keyField = DaoObject.getKeyField(clazz);
 
         String key = keyField.getName();
@@ -136,7 +133,7 @@ public abstract class DatabaseConnection implements AutoCloseable {
         return new DaoStatement(conn, sql);
     }
 
-    <T extends DaoObject> DaoStatement create_DELETE(Connection conn, Class<T> clazz) throws SQLException {
+    <T> DaoStatement create_DELETE(Connection conn, Class<T> clazz) throws SQLException {
         Field keyField = DaoObject.getKeyField(clazz);
 
         String key = keyField.getName();

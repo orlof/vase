@@ -12,7 +12,7 @@ public class DaoObject {
         return !(Modifier.isStatic(modifiers) || Modifier.isTransient(modifiers));
     }
 
-    public static <T extends DaoObject> Field[] getFields(Class<T> currentClass) {
+    public static <T> Field[] getFields(Class<?> currentClass) {
         Field[] fields = _cache.get(currentClass);
         if (fields != null) {
             return fields;
@@ -24,7 +24,7 @@ public class DaoObject {
         return fields;
     }
 
-    public static <T extends DaoObject> Field getKeyField(Class<T> clazz) {
+    public static <T> Field getKeyField(Class<T> clazz) {
         Field[] fields = getFields(clazz);
         for(Field field: fields) {
             if(field.getAnnotation(SqlKey.class) != null) {
@@ -34,7 +34,7 @@ public class DaoObject {
         throw new RuntimeException("SqlKey is not specified in " + clazz.getName());
     }
 
-    public static <T extends DaoObject> Object getKeyValue(T dao) {
+    public static <T> Object getKeyValue(T dao) {
         Field[] fields = getFields(dao.getClass());
         try {
             for(Field field: fields) {
@@ -65,69 +65,23 @@ public class DaoObject {
         return result;
     }
 
-    @Override
-    public String toString() {
+    public static String toString(Object obj) {
         List<String> fields = new ArrayList<>();
 
-        for(Field f: getFields(getClass())) {
+        for(Field f: getFields(obj.getClass())) {
             try {
                 if(f.getType() == String.class) {
-                    fields.add(String.format("%s=\"%s\"", f.getName(), f.get(this)));
+                    fields.add(String.format("%s=\"%s\"", f.getName(), f.get(obj)));
                 } else if(f.getType() == Character.TYPE) {
-                    fields.add(String.format("%s='%s'", f.getName(), f.get(this)));
+                    fields.add(String.format("%s='%s'", f.getName(), f.get(obj)));
                 } else {
-                    fields.add(String.format("%s=%s", f.getName(), f.get(this)));
+                    fields.add(String.format("%s=%s", f.getName(), f.get(obj)));
                 }
             } catch (IllegalArgumentException | IllegalAccessException ex) {
                 return "ERROR: " + ex.toString();
             }
         }
 
-        return String.format("%s(%s)", getClass().getSimpleName(), String.join(", ", fields));
-    }
-
-    public HashMap<String, String> toMap() {
-        HashMap<String, String> map = new HashMap<>();
-        for(Field f: getFields(getClass())) {
-            try {
-                map.put(f.getName(), String.valueOf(f.get(this)));
-            } catch (IllegalAccessException e) {
-                e.printStackTrace();
-            }
-        }
-        return map;
-    }
-
-    public <T extends DaoObject> T fromMap(Map<String, String> map) {
-        for(Field f: getFields(getClass())) {
-            try {
-                if(map.containsKey(f.getName())) {
-                    Class type = f.getType();
-                    if(type == Integer.TYPE)
-                        f.set(this, Integer.parseInt(map.get(f.getName())));
-                    else if(type == Long.TYPE)
-                        f.set(this, Long.parseLong(map.get(f.getName())));
-                    else if(type == Boolean.TYPE)
-                        f.set(this, Boolean.parseBoolean(map.get(f.getName())));
-                    else if(type == String.class)
-                        f.set(this, map.get(f.getName()));
-                    else
-                        throw new RuntimeException("Unknown Map conversion type: " + type.toString());
-                }
-            } catch (IllegalAccessException e) {
-                e.printStackTrace();
-            }
-        }
-        return (T) this;
-    }
-
-    public <T extends DaoObject> void copyTo(T dst) {
-        for(Field f: getFields(getClass())) {
-            String name = f.getName();
-            try {
-                Field target = dst.getClass().getField(name);
-                target.set(dst, f.get(this));
-            } catch (NoSuchFieldException | IllegalAccessException ignore) {}
-        }
+        return String.format("%s(%s)", obj.getClass().getSimpleName(), String.join(", ", fields));
     }
 }

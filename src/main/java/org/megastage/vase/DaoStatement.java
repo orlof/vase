@@ -50,7 +50,7 @@ public class DaoStatement extends NamedParameterStatement {
         return rs.next();
     }
 
-    public <T extends DaoObject> T execute_READ(Class<T> clazz, Object keyValue) throws SQLException {
+    public <T> T execute_READ(Class<T> clazz, Object keyValue) throws SQLException {
         Field keyField = DaoObject.getKeyField(clazz);
 
         if (Enum.class.isAssignableFrom(keyField.getType())) {
@@ -61,7 +61,7 @@ public class DaoStatement extends NamedParameterStatement {
         return execute_READ(clazz);
     }
 
-    public <T extends DaoObject> T execute_READ(Class<T> clazz) throws SQLException {
+    public <T> T execute_READ(Class<T> clazz) throws SQLException {
         try {
             try(ResultSet rs = executeQuery()) {
                 if(rs.next()) {
@@ -79,7 +79,7 @@ public class DaoStatement extends NamedParameterStatement {
         }
     }
 
-    public <T extends DaoObject> List<T> execute_READ_ALL(Class<T> clazz) throws SQLException {
+    public <T> List<T> execute_READ_ALL(Class<T> clazz) throws SQLException {
         ArrayList<T> result = new ArrayList<>();
         try(ResultSet rs = executeQuery()) {
             while(rs.next()) {
@@ -95,7 +95,7 @@ public class DaoStatement extends NamedParameterStatement {
         }
     }
 
-    public <T extends DaoObject> T execute_CREATE(T item) throws SQLException {
+    public <T> T execute_CREATE(T item) throws SQLException {
         setValuesFrom(item);
         try (ResultSet rs = executeQuery()) {
             if(rs.next()) {
@@ -109,7 +109,7 @@ public class DaoStatement extends NamedParameterStatement {
         return item;
     }
 
-    public <T extends DaoObject> boolean execute_UPDATE(T item) throws SQLException {
+    public <T> boolean execute_UPDATE(T item) throws SQLException {
         setValuesFrom(item);
         int rows = executeUpdate();
 
@@ -122,7 +122,7 @@ public class DaoStatement extends NamedParameterStatement {
         return false;
     }
 
-    public <T extends DaoObject> boolean execute_DELETE(Class<T> clazz, Object keyValue) throws SQLException {
+    public <T> boolean execute_DELETE(Class<T> clazz, Object keyValue) throws SQLException {
         Field keyField = DaoObject.getKeyField(clazz);
 
         if (Enum.class.isAssignableFrom(keyField.getType())) {
@@ -144,7 +144,7 @@ public class DaoStatement extends NamedParameterStatement {
         return false;
     }
 
-    public void setValuesFrom(DaoObject src) throws SQLException {
+    public void setValuesFrom(Object src) throws SQLException {
         for(Field f: DaoObject.getFields(src.getClass())) {
             try {
                 if(Enum.class.isAssignableFrom(f.getType())) {
@@ -158,7 +158,7 @@ public class DaoStatement extends NamedParameterStatement {
         }
     }
 
-    public <T extends DaoObject> T setValuesTo(T dst) throws SQLException {
+    public <T> T setValuesTo(T dst) throws SQLException {
         for(Field f: DaoObject.getFields(dst.getClass())) {
             try {
                 if(Enum.class.isAssignableFrom(f.getType())) {

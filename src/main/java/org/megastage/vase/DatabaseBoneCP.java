@@ -1,6 +1,5 @@
 package org.megastage.vase;
 
-import com.esotericsoftware.minlog.Log;
 import com.jolbox.bonecp.BoneCP;
 import com.jolbox.bonecp.BoneCPConfig;
 
@@ -8,11 +7,10 @@ import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.List;
 
-public class DatabaseConnectionPool extends DatabaseConnection {
+public class DatabaseBoneCP extends Database {
     private BoneCP connectionPool;
 
-    DatabaseConnectionPool() throws ClassNotFoundException, SQLException {
-        Log.info("Init DatabaseConnectionPool...");
+    DatabaseBoneCP(String driver, String url, String user, String pass) throws ClassNotFoundException, SQLException {
         Class.forName(driver);
 
         BoneCPConfig config = new BoneCPConfig();
@@ -25,14 +23,11 @@ public class DatabaseConnectionPool extends DatabaseConnection {
         config.setDefaultAutoCommit(true);
 
         connectionPool = new BoneCP(config);
-        Log.info("Done.");
     }
 
     @Override
     public void close() {
-        Log.info("Close DatabaseConnectionPool...");
         connectionPool.shutdown();
-        Log.info("Done.");
     }
 
     @Override
@@ -41,7 +36,7 @@ public class DatabaseConnectionPool extends DatabaseConnection {
     }
 
     @Override
-    public <T extends DaoObject> T create(T dao) throws SQLException {
+    public <T> T create(T dao) throws SQLException {
         try(Connection conn = getConnection()) {
             try (DaoStatement stmt = create_CREATE(conn, dao.getClass())) {
                 return stmt.execute_CREATE(dao);
@@ -50,7 +45,7 @@ public class DatabaseConnectionPool extends DatabaseConnection {
     }
 
     @Override
-    public <T extends DaoObject> T read(Class<T> clazz, Object key) throws SQLException {
+    public <T> T read(Class<T> clazz, Object key) throws SQLException {
         try(Connection conn = getConnection()) {
             try (DaoStatement stmt = create_READ(conn, clazz)) {
                 return stmt.execute_READ(clazz, key);
@@ -59,7 +54,7 @@ public class DatabaseConnectionPool extends DatabaseConnection {
     }
 
     @Override
-    public <T extends DaoObject> List<T> readAll(Class<T> clazz) throws SQLException {
+    public <T> List<T> readAll(Class<T> clazz) throws SQLException {
         try(Connection conn = getConnection()) {
             try (DaoStatement stmt = create_READ_ALL(conn, clazz)) {
                 return stmt.execute_READ_ALL(clazz);
@@ -68,7 +63,7 @@ public class DatabaseConnectionPool extends DatabaseConnection {
     }
 
     @Override
-    public <T extends DaoObject> boolean update(T item) throws SQLException {
+    public <T> boolean update(T item) throws SQLException {
         try(Connection conn = getConnection()) {
             try (DaoStatement stmt = create_UPDATE(conn, item.getClass())) {
                 return stmt.execute_UPDATE(item);
@@ -77,7 +72,7 @@ public class DatabaseConnectionPool extends DatabaseConnection {
     }
 
     @Override
-    public <T extends DaoObject> boolean delete(Class<T> clazz, Object key) throws SQLException {
+    public <T> boolean delete(Class<T> clazz, Object key) throws SQLException {
         try(Connection conn = getConnection()) {
             try (DaoStatement stmt = create_DELETE(conn, clazz)) {
                 return stmt.execute_DELETE(clazz, key);
