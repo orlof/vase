@@ -18,42 +18,79 @@ public class SchemaExportPSQL {
         Reflections reflections = new Reflections(rootPackage);
         Set<Class<?>> classes = reflections.getTypesAnnotatedWith(SqlTableName.class);
 
-        List<String> dropTypes = new ArrayList<>();
-        List<String> dropTables = new ArrayList<>();
-        List<String> types = new ArrayList<>();
-        List<String> tables = new ArrayList<>();
+        Set<String> allTables = new HashSet<>();
+
+        Map<String, String> create = new HashMap<>();
+        Map<String, String> drop = new HashMap<>();
+
         for(Class clazz: classes) {
             String tableName = ((SqlTableName) clazz.getAnnotation(SqlTableName.class)).value();
+            allTables.add(tableName);
+
             if(clazz.isEnum()) {
                 String[] values = getNames(clazz);
-                types.add(String.format("CREATE TYPE %s AS ENUM (%s);\n", tableName, String.join(", ", values)));
-                dropTypes.add(String.format("DROP TYPE IF EXISTS %s", tableName));
+                create.put(tableName, String.format("CREATE TYPE %s AS ENUM (%s);\n", tableName, String.join(", ", values)));
+                drop.put(tableName, String.format("DROP TYPE IF EXISTS %s;", tableName));
             } else {
                 List<String> cols = Arrays.stream(DaoObject.getFields(clazz))
-                        .map(this::exportCol)
+                        .map(f -> exportCol(f, tableName))
                         .collect(Collectors.toList());
 
-                tables.add(String.format("CREATE TABLE %s (\n%s\n);\n", tableName, String.join(",\n", cols)));
-                dropTables.add(String.format("DROP TABLE IF EXISTS %s", tableName));
+                create.put(tableName, String.format("CREATE TABLE %s (\n%s\n);\n", tableName, String.join(",\n", cols)));
+                drop.put(tableName, String.format("DROP TABLE IF EXISTS %s;", tableName));
             }
         }
 
-        List<String> all = new ArrayList<>();
-        all.addAll(dropTables);
-        all.add("");
-        all.addAll(dropTypes);
-        all.add("");
-        all.addAll(types);
-        all.addAll(tables);
+        List<String> order = new ArrayList<>();
 
-        return String.join("\n", all);
+        Set<String> free = getFree(allTables);
+        while(!free.isEmpty()) {
+            allTables.removeAll(free);
+            order.addAll(free.stream().sorted().collect(Collectors.toList()));
+            Iterator<Link> it = links.iterator();
+            while(it.hasNext()) {
+                if(free.contains(it.next().to)) {
+                    it.remove();
+                }
+            }
+            free = getFree(allTables);
+        }
+
+        if(allTables.isEmpty()) {
+            List<String> output = new ArrayList<>();
+            for (String table : order) {
+                output.add(drop.get(table));
+            }
+            Collections.reverse(output);
+
+            for (String table : order) {
+                output.add(create.get(table));
+            }
+
+            return String.join("\n", output);
+        }
+
+        throw new RuntimeException("CircularReferenceException");
+    }
+
+    private Set<String> getFree(Set<String> all) {
+        Set<String> free = new HashSet<>();
+        free.addAll(all);
+
+        Set<String> notFree = new HashSet<>();
+        notFree.addAll(links.stream()
+                .map(link -> link.from)
+                .collect(Collectors.toSet()));
+
+        free.removeAll(notFree);
+        return free;
     }
 
     public String[] getNames(Class<? extends Enum<?>> e) {
         return Arrays.stream(e.getEnumConstants()).map(Enum::name).toArray(String[]::new);
     }
 
-    private String exportCol(Field f) {
+    private String exportCol(Field f, String table) {
         List<String> opts = new ArrayList<>();
         if(f.getAnnotation(SqlSerial.class) != null) {
             opts.add("SERIAL");
@@ -80,9 +117,23 @@ public class SchemaExportPSQL {
                 throw new RuntimeException(String.format("Referencing field type must by int: %s.%s", f.getDeclaringClass(), f.getName()));
             }
             Class references = f.getAnnotation(SqlReferences.class).value();
-            opts.add(String.format("REFERENCES %s", ((SqlTableName) references.getAnnotation(SqlTableName.class)).value()));
+            String target = ((SqlTableName) references.getAnnotation(SqlTableName.class)).value();
+            opts.add(String.format("REFERENCES %s", target));
+            links.add(new Link(table, target));
         }
 
         return String.format("    %s %s", f.getName(), String.join(" ", opts));
+    }
+
+    private List<Link> links = new ArrayList<>();
+
+    private static class Link {
+        String from;
+        String to;
+
+        public Link(String from, String to) {
+            this.from = from;
+            this.to = to;
+        }
     }
 }
