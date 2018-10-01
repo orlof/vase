@@ -62,6 +62,7 @@ public class SchemaExportPSQL {
                 output.add(drop.get(table));
             }
             Collections.reverse(output);
+            output.add("");
 
             for (String table : order) {
                 output.add(create.get(table));
