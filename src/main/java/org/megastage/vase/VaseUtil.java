@@ -4,7 +4,7 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.util.*;
 
-public class DaoObject {
+public class VaseUtil {
     private static transient HashMap<Class, Field[]> _cache = new HashMap<>();
 
     private static boolean copyableField(Field f) {

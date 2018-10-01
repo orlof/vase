@@ -7,7 +7,6 @@ import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Properties;
 import java.util.stream.Collectors;
 
 public abstract class Database implements AutoCloseable {
@@ -20,8 +19,8 @@ public abstract class Database implements AutoCloseable {
     public abstract <T> boolean update(T item) throws SQLException;
     public abstract <T> boolean delete(Class<T> clazz, Object key) throws SQLException;
 
-    public boolean delete(DaoObject dao) throws SQLException {
-        return delete(dao.getClass(), DaoObject.getKeyValue(dao));
+    public boolean delete(VaseUtil dao) throws SQLException {
+        return delete(dao.getClass(), VaseUtil.getKeyValue(dao));
     }
 
     public <T> T safeCreate(T dao) {
@@ -64,7 +63,7 @@ public abstract class Database implements AutoCloseable {
         }
     }
 
-    public boolean safeDelete(DaoObject dao) {
+    public boolean safeDelete(VaseUtil dao) {
         try { return delete(dao); }
         catch(SQLException e) {
             Log.error("DB", "safeDelete failed", e);
@@ -83,29 +82,29 @@ public abstract class Database implements AutoCloseable {
         return tableName;
     }
 
-    <T> DaoStatement create_READ(Connection conn, Class<T> clazz) throws SQLException {
-        Field keyField = DaoObject.getKeyField(clazz);
+    <T> PojoStatement create_READ(Connection conn, Class<T> clazz) throws SQLException {
+        Field keyField = VaseUtil.getKeyField(clazz);
 
         String key = keyField.getName();
         String value = decorateColumn(keyField.getType(), key);
 
         String sql = String.format("SELECT * FROM %s WHERE %s=%s", getTableName(clazz), key, value);
 
-        return new DaoStatement(conn, sql);
+        return new PojoStatement(conn, sql);
     }
 
-    <T> DaoStatement create_READ_ALL(Connection conn, Class<T> clazz) throws SQLException {
+    <T> PojoStatement create_READ_ALL(Connection conn, Class<T> clazz) throws SQLException {
         String sql = "SELECT * FROM " + getTableName(clazz);
-        return new DaoStatement(conn, sql);
+        return new PojoStatement(conn, sql);
     }
 
-    <T> DaoStatement create_CREATE(Connection conn, Class<T> clazz) throws SQLException {
-        List<String> cols = Arrays.stream(DaoObject.getFields(clazz))
+    <T> PojoStatement create_CREATE(Connection conn, Class<T> clazz) throws SQLException {
+        List<String> cols = Arrays.stream(VaseUtil.getFields(clazz))
                 .filter(field -> field.getAnnotation(SqlSerial.class) == null)
                 .map(Field::getName)
                 .collect(Collectors.toList());
 
-        List<String> values = Arrays.stream(DaoObject.getFields(clazz))
+        List<String> values = Arrays.stream(VaseUtil.getFields(clazz))
                 .filter(field -> field.getAnnotation(SqlSerial.class) == null)
                 .map(f -> decorateColumn(f.getType(), f.getName()))
                 .collect(Collectors.toList());
@@ -113,16 +112,16 @@ public abstract class Database implements AutoCloseable {
         String sql = String.format("INSERT INTO %s (%s) VALUES (%s) RETURNING *",
                 getTableName(clazz), String.join(", ", cols), String.join(", ", values));
 
-        return new DaoStatement(conn, sql);
+        return new PojoStatement(conn, sql);
     }
 
-    <T> DaoStatement create_UPDATE(Connection conn, Class<T> clazz) throws SQLException {
-        Field keyField = DaoObject.getKeyField(clazz);
+    <T> PojoStatement create_UPDATE(Connection conn, Class<T> clazz) throws SQLException {
+        Field keyField = VaseUtil.getKeyField(clazz);
 
         String key = keyField.getName();
         String value = decorateColumn(keyField.getType(), key);
 
-        List<String> cols = Arrays.stream(DaoObject.getFields(clazz))
+        List<String> cols = Arrays.stream(VaseUtil.getFields(clazz))
                 .filter(f -> f != keyField)
                 .map(f -> String.format("%s=%s", f.getName(), decorateColumn(f.getType(), f.getName())))
                 .collect(Collectors.toList());
@@ -130,18 +129,18 @@ public abstract class Database implements AutoCloseable {
         String sql = String.format("UPDATE %s SET %s WHERE %s=%s",
                 getTableName(clazz), String.join(", ", cols), key, value);
 
-        return new DaoStatement(conn, sql);
+        return new PojoStatement(conn, sql);
     }
 
-    <T> DaoStatement create_DELETE(Connection conn, Class<T> clazz) throws SQLException {
-        Field keyField = DaoObject.getKeyField(clazz);
+    <T> PojoStatement create_DELETE(Connection conn, Class<T> clazz) throws SQLException {
+        Field keyField = VaseUtil.getKeyField(clazz);
 
         String key = keyField.getName();
         String value = decorateColumn(keyField.getType(), key);
 
         String sql = String.format("DELETE FROM %s WHERE %s=%s", getTableName(clazz), key, value);
 
-        return new DaoStatement(conn, sql);
+        return new PojoStatement(conn, sql);
     }
 
     public static String decorateColumn(Class clazz, String col) {

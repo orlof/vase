@@ -32,7 +32,7 @@ public class SchemaExportPSQL {
                 create.put(tableName, String.format("CREATE TYPE %s AS ENUM (%s);\n", tableName, String.join(", ", values)));
                 drop.put(tableName, String.format("DROP TYPE IF EXISTS %s;", tableName));
             } else {
-                List<String> cols = Arrays.stream(DaoObject.getFields(clazz))
+                List<String> cols = Arrays.stream(VaseUtil.getFields(clazz))
                         .map(f -> exportCol(f, tableName))
                         .collect(Collectors.toList());
 

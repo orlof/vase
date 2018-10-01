@@ -31,31 +31,31 @@ public class DatabaseStatement extends Database {
 
     @Override
     public <T> T create(T dao) throws SQLException {
-        DaoStatement stmt = create_CREATE(getConnection(), dao.getClass());
+        PojoStatement stmt = create_CREATE(getConnection(), dao.getClass());
         return stmt.execute_CREATE(dao);
     }
 
     @Override
     public <T> T read(Class<T> clazz, Object key) throws SQLException {
-        DaoStatement stmt = create_READ(getConnection(), clazz);
+        PojoStatement stmt = create_READ(getConnection(), clazz);
         return stmt.execute_READ(clazz, key);
     }
 
     @Override
     public <T> List<T> readAll(Class<T> clazz) throws SQLException {
-        DaoStatement stmt = create_READ_ALL(getConnection(), clazz);
+        PojoStatement stmt = create_READ_ALL(getConnection(), clazz);
         return stmt.execute_READ_ALL(clazz);
     }
 
     @Override
     public <T> boolean update(T dao) throws SQLException {
-        DaoStatement stmt = create_UPDATE(getConnection(), dao.getClass());
+        PojoStatement stmt = create_UPDATE(getConnection(), dao.getClass());
         return stmt.execute_UPDATE(dao);
     }
 
     @Override
     public <T> boolean delete(Class<T> clazz, Object key) throws SQLException {
-        DaoStatement stmt = create_DELETE(getConnection(), clazz);
+        PojoStatement stmt = create_DELETE(getConnection(), clazz);
         return stmt.execute_DELETE(clazz, key);
     }
 }

@@ -38,7 +38,7 @@ public class DatabaseBoneCP extends Database {
     @Override
     public <T> T create(T dao) throws SQLException {
         try(Connection conn = getConnection()) {
-            try (DaoStatement stmt = create_CREATE(conn, dao.getClass())) {
+            try (PojoStatement stmt = create_CREATE(conn, dao.getClass())) {
                 return stmt.execute_CREATE(dao);
             }
         }
@@ -47,7 +47,7 @@ public class DatabaseBoneCP extends Database {
     @Override
     public <T> T read(Class<T> clazz, Object key) throws SQLException {
         try(Connection conn = getConnection()) {
-            try (DaoStatement stmt = create_READ(conn, clazz)) {
+            try (PojoStatement stmt = create_READ(conn, clazz)) {
                 return stmt.execute_READ(clazz, key);
             }
         }
@@ -56,7 +56,7 @@ public class DatabaseBoneCP extends Database {
     @Override
     public <T> List<T> readAll(Class<T> clazz) throws SQLException {
         try(Connection conn = getConnection()) {
-            try (DaoStatement stmt = create_READ_ALL(conn, clazz)) {
+            try (PojoStatement stmt = create_READ_ALL(conn, clazz)) {
                 return stmt.execute_READ_ALL(clazz);
             }
         }
@@ -65,7 +65,7 @@ public class DatabaseBoneCP extends Database {
     @Override
     public <T> boolean update(T item) throws SQLException {
         try(Connection conn = getConnection()) {
-            try (DaoStatement stmt = create_UPDATE(conn, item.getClass())) {
+            try (PojoStatement stmt = create_UPDATE(conn, item.getClass())) {
                 return stmt.execute_UPDATE(item);
             }
         }
@@ -74,7 +74,7 @@ public class DatabaseBoneCP extends Database {
     @Override
     public <T> boolean delete(Class<T> clazz, Object key) throws SQLException {
         try(Connection conn = getConnection()) {
-            try (DaoStatement stmt = create_DELETE(conn, clazz)) {
+            try (PojoStatement stmt = create_DELETE(conn, clazz)) {
                 return stmt.execute_DELETE(clazz, key);
             }
         }

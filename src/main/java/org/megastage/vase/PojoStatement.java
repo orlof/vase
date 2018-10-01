@@ -7,10 +7,10 @@ import java.lang.reflect.Method;
 import java.sql.*;
 import java.util.*;
 
-public class DaoStatement extends NamedParameterStatement {
+public class PojoStatement extends NamedParameterStatement {
     protected ResultSet rs;
 
-    public DaoStatement(Connection connection, String query) throws SQLException {
+    public PojoStatement(Connection connection, String query) throws SQLException {
         super(connection, query);
     }
 
@@ -51,7 +51,7 @@ public class DaoStatement extends NamedParameterStatement {
     }
 
     public <T> T execute_READ(Class<T> clazz, Object keyValue) throws SQLException {
-        Field keyField = DaoObject.getKeyField(clazz);
+        Field keyField = VaseUtil.getKeyField(clazz);
 
         if (Enum.class.isAssignableFrom(keyField.getType())) {
             setString(keyField.getName(), String.valueOf(keyValue));
@@ -123,7 +123,7 @@ public class DaoStatement extends NamedParameterStatement {
     }
 
     public <T> boolean execute_DELETE(Class<T> clazz, Object keyValue) throws SQLException {
-        Field keyField = DaoObject.getKeyField(clazz);
+        Field keyField = VaseUtil.getKeyField(clazz);
 
         if (Enum.class.isAssignableFrom(keyField.getType())) {
             setString(keyField.getName(), String.valueOf(keyValue));
@@ -145,7 +145,7 @@ public class DaoStatement extends NamedParameterStatement {
     }
 
     public void setValuesFrom(Object src) throws SQLException {
-        for(Field f: DaoObject.getFields(src.getClass())) {
+        for(Field f: VaseUtil.getFields(src.getClass())) {
             try {
                 if(Enum.class.isAssignableFrom(f.getType())) {
                     setStringEx(f.getName(), f.get(src).toString());
@@ -159,7 +159,7 @@ public class DaoStatement extends NamedParameterStatement {
     }
 
     public <T> T setValuesTo(T dst) throws SQLException {
-        for(Field f: DaoObject.getFields(dst.getClass())) {
+        for(Field f: VaseUtil.getFields(dst.getClass())) {
             try {
                 if(Enum.class.isAssignableFrom(f.getType())) {
                     try {
