@@ -15,7 +15,7 @@ public class Assembler {
 
     public static void main( String[] args ) {
         Assembler me = new Assembler();
-        me.setup("org.megastage.vase.test");
+        me.setup("org.megastage.vase.example");
         me.shutdown();
     }
 

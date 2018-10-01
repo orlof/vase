@@ -10,7 +10,8 @@ import java.util.stream.Collectors;
 public class SchemaExportPSQL {
     public static void main(String[] args) throws Exception {
         SchemaExportPSQL me = new SchemaExportPSQL();
-        String schema = me.export("org.megastage.vase");
+        String rootPackage = args.length == 1 ? args[0]: "org.megastage.vase.example";
+        String schema = me.export(rootPackage);
         System.out.println(schema);
     }
 
